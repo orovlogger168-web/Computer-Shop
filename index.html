@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<!-- ធ្វើឱ្យទំព័រសមនឹងអេក្រង់ទូរស័ព្ទ -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CompShop Management System</title>
+<!-- Font: Inter សម្រាប់អក្សរអង់គ្លេស និង Noto Sans Khmer សម្រាប់ខ្មែរ -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Khmer:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ===== ពណ៌ទាំងអស់ដាក់ជា variable (កែនៅទីនេះកន្លែងតែមួយ) ===== */
+:root{--bg:#f4f6fb;--card:#fff;--ink:#1c2562;--mut:#6b7285;--line:#e8ebf3;--side:#1e2766;--pri:#3b5bdb;--bar:#8fb1ff;
+--gr:#dcf5e5;--grt:#16803c;   /* បៃតង = ល្អ */
+--am:#fdf0c9;--amt:#a4600a;   /* លឿង = ប្រុងប្រយ័ត្ន */
+--rd:#fde1e1;--rdt:#c42b2b;   /* ក្រហម = ស្តុកទាប */
+--bl:#dce8ff;--blt:#2450b8;   /* ខៀវ = កំពុងដំណើរការ */
+--pad:env(safe-area-inset-top,0px);--padb:env(safe-area-inset-bottom,0px)}
+
+/* ===== Dark mode: ប្តូរពណ៌ស្វ័យប្រវត្តិតាមប្រព័ន្ធ ===== */
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10142e;--card:#1a2050;--ink:#e8ebff;--mut:#9aa3c7;--line:#2a3170;--side:#0b0e24;--bar:#4a62b8;--gr:#16391f;--grt:#6fe09a;--am:#44350f;--amt:#f5c768;--rd:#4a1d1d;--rdt:#ff8f8f;--bl:#1f3266;--blt:#9dbcff}}
+:root[data-theme=dark]{--bg:#10142e;--card:#1a2050;--ink:#e8ebff;--mut:#9aa3c7;--line:#2a3170;--side:#0b0e24;--bar:#4a62b8;--gr:#16391f;--grt:#6fe09a;--am:#44350f;--amt:#f5c768;--rd:#4a1d1d;--rdt:#ff8f8f;--bl:#1f3266;--blt:#9dbcff}
+
+*{box-sizing:border-box;margin:0}
+html{scroll-padding-top:var(--pad)}
+body{font-family:Inter,"Noto Sans Khmer",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;padding-top:var(--pad);padding-bottom:var(--padb);display:flex;min-height:100vh}
+
+/* ===== Sidebar (ម៉ឺនុយខាងឆ្វេង) ===== */
+aside{width:224px;background:var(--side);color:#fff;padding:18px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;flex-shrink:0}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 8px 18px}
+.logo{width:36px;height:36px;border-radius:9px;background:#f6c667;display:grid;place-items:center;font-size:18px}
+.brand b{display:block;font-size:14px}.brand small{opacity:.7;font-size:11px}
+nav a{display:block;padding:9px 12px;border-radius:9px;color:#cfd5ff;text-decoration:none;font-weight:500;cursor:pointer}
+nav a small{display:block;font-size:10px;opacity:.65;font-weight:400}
+nav a.on{background:#fff;color:#1e2766}           /* ទំព័រកំពុងបើក */
+.user{margin-top:auto;border-top:1px solid #ffffff22;padding:12px 8px 0;display:flex;gap:10px;align-items:center;font-size:12px}
+.av{width:30px;height:30px;border-radius:50%;background:#8fb1ff;color:#1e2766;display:grid;place-items:center;font-weight:700;font-size:11px}
+
+/* ===== ផ្នែកខ្លឹមសារ និង component ទូទៅ ===== */
+main{flex:1;padding:22px 26px;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+h1{font-size:21px}.sub{color:var(--mut);font-size:12px;margin-top:3px}
+.btn{background:var(--card);border:1px solid var(--line);color:var(--ink);padding:8px 14px;border-radius:8px;font:inherit;font-weight:600;cursor:pointer}
+.btn.p{background:var(--pri);border-color:var(--pri);color:#fff}   /* ប៊ូតុងចម្បង */
+.grid{display:grid;gap:14px}
+.k4{grid-template-columns:repeat(4,1fr)}     /* KPI 4 ប្រអប់ */
+.two{grid-template-columns:1.7fr 1fr}        /* 2 ជួរ: ធំ + តូច */
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px;min-width:0}
+.card h3{font-size:13px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+
+/* ===== KPI cards ===== */
+.kpi{display:flex;gap:12px;align-items:center;margin:0}
+.ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:17px}
+.kpi small{color:var(--mut);font-size:11px;display:block}.kpi b{font-size:22px}
+
+/* ===== ក្រាហ្វកំណាត់ (គ្មាន library, ប្រើ CSS សុទ្ធ) ===== */
+.chart{display:flex;align-items:flex-end;gap:14px;height:190px;padding-top:10px}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:11px;color:var(--mut);gap:5px}
+.col i{width:100%;max-width:38px;background:var(--bar);border-radius:5px 5px 0 0;display:block}
+.col.t i{background:var(--ink)}               /* កំណាត់ថ្ងៃនេះពណ៌ងាប់ */
+.col span{color:var(--ink);font-weight:600}
+
+/* ===== តារាង និង status pill ===== */
+.tw{overflow-x:auto}                          /* តារាងរមូរបានលើទូរស័ព្ទ */
+table{width:100%;border-collapse:collapse;min-width:480px}
+th{text-align:left;font-size:10px;letter-spacing:.06em;color:var(--mut);padding:8px;background:var(--bg)}
+td{padding:11px 8px;border-bottom:1px solid var(--line);font-size:13px}
+.pill{padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap}
+.g{background:var(--gr);color:var(--grt)}.a{background:var(--am);color:var(--amt)}.r{background:var(--rd);color:var(--rdt)}.b{background:var(--bl);color:var(--blt)}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.row small{color:var(--mut);display:block;font-size:11px}
+
+/* ===== ទំព័រលក់ (Sales & Billing) ===== */
+.prod{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.pc{border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;background:var(--card)}
+.pc:hover{border-color:var(--pri)}.pc b{display:block;margin:6px 0 2px}.pc small{color:var(--mut)}
+.qty{display:flex;gap:6px;align-items:center}
+.qty button{width:24px;height:24px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+input,select{font:inherit;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);width:100%}
+.tot{display:flex;justify-content:space-between;padding:6px 0}
+.tot.big{font-size:18px;font-weight:700;border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
+
+/* ===== ទំព័រជួសជុល (Kanban board 3 ជួរ) ===== */
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.bc{background:var(--bg);border-radius:10px;padding:10px;min-height:120px}
+.bc h4{font-size:12px;margin:2px 4px 10px;color:var(--mut)}
+.job{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:10px;margin-bottom:8px}
+.job small{color:var(--mut);display:block;margin:3px 0 8px}
+
+/* ===== Responsive: tablet និងទូរស័ព្ទ ===== */
+.tabs{display:none}                           /* ម៉ឺនុយខាងក្រោមលាក់លើកុំព្យូទ័រ */
+@media(max-width:900px){.k4{grid-template-columns:1fr 1fr}.two,.board{grid-template-columns:1fr}}
+@media(max-width:720px){
+  body{flex-direction:column}
+  aside{display:none}                         /* លាក់ sidebar លើទូរស័ព្ទ */
+  main{padding:16px 14px 80px}
+  .tabs{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--side);padding:8px 4px calc(8px + var(--padb));z-index:5}
+  .tabs a{flex:1;text-align:center;color:#cfd5ff;font-size:10px;padding:6px 2px;border-radius:8px;cursor:pointer}
+  .tabs a.on{background:#fff;color:#1e2766}
+}
+</style></head><body>
+
+<!-- ត្រូវបំពេញដោយ JavaScript ខាងក្រោម -->
+<aside>
+<div class="brand"><div class="logo">🖥</div><div><b>CompShop</b><small>Management System</small></div></div>
+<nav id="nav"></nav>
+<div class="user"><div class="av">SL</div><div><b>Sou Lyhor</b><br><span style="opacity:.7">Shop Manager</span></div></div>
+</aside>
+<main id="v"></main>          <!-- ទំព័រនីមួយៗបង្ហាញត្រង់នេះ -->
+<div class="tabs" id="tabs"></div>   <!-- ម៉ឺនុយខាងក្រោមសម្រាប់ទូរស័ព្ទ -->
+
+<script>
+// ===== ទំព័រទាំង 5: [id, ឈ្មោះអង់គ្លេស, ឈ្មោះខ្មែរ, icon] =====
+var P=[["dashboard","Dashboard","ផ្ទាំងគ្រប់គ្រង","▦"],["sales","Sales & Billing","លក់ និងវិក្កយបត្រ","🧾"],["repairs","Repairs","ជួសជុល","🔧"],["inventory","Inventory","ស្តុកទំនិញ","📦"],["customers","Customers","អតិថិជន","👥"]];
+
+// ===== ទិន្នន័យគំរូ (កែបានតាមចិត្ត) =====
+// STOCK: [ឈ្មោះ, អ្នកផ្គត់ផ្គង់, ចំនួនក្នុងស្តុក, តម្លៃ]
+var STOCK=[["WiFi Router AX","Digital Hub",1,89],["Laptop Charger 65W","Phnom Penh Parts",2,25],["RAM DDR4 16GB","Digital Hub",3,48],["Wireless Mouse","Phnom Penh Parts",4,12],["SSD 512GB NVMe","Digital Hub",18,55],["USB-C Hub","Phnom Penh Parts",22,19],["Keyboard Mech","Digital Hub",9,39],["HDMI Cable 2m","Phnom Penh Parts",40,6]];
+// JOBS: [ឧបករណ៍, អតិថិជន, បច្ចេកទេស, ស្ថានភាព]
+var JOBS=[["MacBook Air","Sok Dara","Sreyneang","Diagnosing"],["Acer Aspire","Prak Sophea","Vuthy","In Progress"],["Lenovo ThinkPad","Lim Rithy","Sreyneang","Done"],["Asus VivoBook","Kim Vuthy","Dara","In Progress"],["HP Pavilion","Chea Sovann","Dara","Diagnosing"]];
+// CUS: [ឈ្មោះ, ទូរស័ព្ទ, ចំនួនបញ្ជាទិញ, សរុបចំណាយ]
+var CUS=[["Sok Dara","012 345 678",8,"$640"],["Prak Sophea","097 111 222",3,"$215"],["Lim Rithy","010 998 877",5,"$388"],["Kim Vuthy","086 456 123",2,"$120"],["Chea Sovann","093 777 555",1,"$60"]];
+// SALES: [ថ្ងៃ, ចំនួនលក់] សម្រាប់ក្រាហ្វ 7 ថ្ងៃ
+var SALES=[["Sun",620],["Mon",880],["Tue",540],["Wed",1100],["Thu",960],["Fri",1380],["Today",1240]];
+
+var cart={},disc=0;   // cart = កន្ត្រកទំនិញ {index: ចំនួន}, disc = % បញ្ចុះតម្លៃ
+
+// pill ស្ថានភាពជួសជុល (លឿង/ខៀវ/បៃតង)
+var stat=function(s){return '<span class="pill '+({Diagnosing:"a","In Progress":"b",Done:"g"}[s])+'">'+s+'</span>'};
+// pill ស្តុក: ≤4 ក្រហម, ≤10 លឿង, ក្រៅពីនេះបៃតង
+var left=function(n){return '<span class="pill '+(n<=4?"r":n<=10?"a":"g")+'">'+(n<=4?n+" left":n+" in stock")+'</span>'};
+// ក្បាលទំព័រ (ចំណងជើង + ប៊ូតុងខាងស្តាំ)
+function head(t,s,x){return '<div class="top"><div><h1>'+t+'</h1><div class="sub">'+s+'</div></div><div>'+(x||'')+'</div></div>'}
+
+// ===== V: ទំព័រនីមួយៗជា function ត្រឡប់ HTML មកវិញ =====
+var V={
+// --- Dashboard ---
+dashboard:function(){
+ var mx=1380;
+ // គណនាកម្ពស់កំណាត់ក្រាហ្វ តាមសមាមាត្រទៅនឹងតម្លៃធំបំផុត
+ var bars=SALES.map(function(d,i){return '<div class="col'+(i==6?' t':'')+'"><span>$'+d[1]+'</span><i style="height:'+(d[1]/mx*140)+'px"></i>'+d[0]+'</div>'}).join('');
+ // បង្ហាញតែ 4 ទំនិញដំបូង (ស្តុកទាបបំផុត)
+ var low=STOCK.slice(0,4).map(function(s){return '<div class="row"><div><b>'+s[0]+'</b><small>'+s[1]+'</small></div>'+left(s[2])+'</div>'}).join('');
+ var jobs=JOBS.slice(0,4).map(function(j){return '<tr><td><b>'+j[0]+'</b></td><td>'+j[1]+'</td><td>'+j[2]+'</td><td>'+stat(j[3])+'</td></tr>'}).join('');
+ return head('Dashboard','Sales, stock and repairs at a glance','<span class="sub" style="margin-right:10px">Saturday, 31 October 2026</span><button class="btn" onclick="window.print()">Export PDF</button>')+
+ '<div class="grid k4"><div class="card kpi"><div class="ic b">$</div><div><small>Today’s Sales</small><b>$1,240</b></div></div><div class="card kpi"><div class="ic a">⚠</div><div><small>Low Stock Items</small><b>4</b></div></div><div class="card kpi"><div class="ic" style="background:#cff6fb">🔧</div><div><small>Open Repairs</small><b>5</b></div></div><div class="card kpi"><div class="ic" style="background:var(--ink);color:#fff">👤</div><div><small>Customers</small><b>5</b></div></div></div>'+
+ '<div class="grid two"><div class="card"><h3>Sales — last 7 days <span class="pill b">USD</span></h3><div class="chart">'+bars+'</div></div><div class="card"><h3>Low-stock alerts <a style="color:var(--pri);cursor:pointer;font-size:12px" onclick="go(\'inventory\')">View all</a></h3>'+low+'</div></div>'+
+ '<div class="card"><h3>Recent repair jobs <a style="color:var(--pri);cursor:pointer;font-size:12px" onclick="go(\'repairs\')">Open board</a></h3><div class="tw"><table><tr><th>DEVICE</th><th>CUSTOMER</th><th>TECHNICIAN</th><th>STATUS</th></tr>'+jobs+'</table></div></div>'},
+
+// --- Sales & Billing ---
+sales:function(){
+ // កាតផលិតផល: ចុចហៅ add(i) ដើម្បីដាក់ក្នុងកន្ត្រក
+ var pr=STOCK.map(function(s,i){return '<div class="pc" onclick="add('+i+')"><div style="font-size:22px">🖥</div><b>'+s[0]+'</b><small>$'+s[3]+' · '+s[2]+' left</small></div>'}).join('');
+ var ids=Object.keys(cart),sub=0;
+ // បន្ទាត់ក្នុងវិក្កយបត្រ + គណនាតម្លៃសរុបរង (sub)
+ var rows=ids.map(function(i){var q=cart[i],p=STOCK[i][3]*q;sub+=p;return '<div class="row"><div><b>'+STOCK[i][0]+'</b><small>$'+STOCK[i][3]+' each</small></div><div class="qty"><button onclick="chg('+i+',-1)">−</button>'+q+'<button onclick="chg('+i+',1)">+</button></div><b>$'+p+'</b></div>'}).join('')||'<div class="sub" style="padding:18px 0">Tap a product to add it to the bill.</div>';
+ var d=sub*disc/100;   // ចំនួនទឹកប្រាក់បញ្ចុះ
+ return head('Sales & Billing','Pick, discount, pay and print in a few clicks')+'<div class="grid two"><div class="card"><h3>Products</h3><div class="prod">'+pr+'</div></div><div class="card"><h3>Current bill</h3><select><option>Walk-in customer</option>'+CUS.map(function(c){return '<option>'+c[0]+'</option>'}).join('')+'</select><div style="margin:8px 0">'+rows+'</div><div class="tot"><span>Subtotal</span><span>$'+sub.toFixed(2)+'</span></div><div class="tot"><span>Discount</span><select style="width:90px" onchange="disc=+this.value;show()"><option value="0"'+(disc==0?' selected':'')+'>0%</option><option value="5"'+(disc==5?' selected':'')+'>5%</option><option value="10"'+(disc==10?' selected':'')+'>10%</option></select></div><div class="tot big"><span>Total</span><span>$'+(sub-d).toFixed(2)+'</span></div><div style="display:flex;gap:8px;margin-top:12px"><button class="btn p" style="flex:1" onclick="alert(\'Payment received (demo)\');cart={};show()">Pay</button><button class="btn" onclick="window.print()">Print</button></div></div></div>'},
+
+// --- Repairs: Kanban board ---
+repairs:function(){
+ // បង្កើតជួរ 3 ស្ថានភាព ហើយចម្រោះ job តាមស្ថានភាពនីមួយៗ
+ var c=["Diagnosing","In Progress","Done"].map(function(s){return '<div class="bc"><h4>'+s.toUpperCase()+'</h4>'+JOBS.filter(function(j){return j[3]==s}).map(function(j){return '<div class="job"><b>'+j[0]+'</b><small>'+j[1]+' · Tech: '+j[2]+'</small>'+stat(s)+'</div>'}).join('')+'</div>'}).join('');
+ return head('Repairs','Track every device from diagnosis to hand-over','<button class="btn p" onclick="alert(\'New repair form (prototype)\')">+ New repair</button>')+'<div class="board">'+c+'</div>'},
+
+// --- Inventory ---
+inventory:function(){
+ return head('Inventory','Colour-coded stock levels','<button class="btn p" onclick="alert(\'Add item form (prototype)\')">+ Add item</button>')+'<div class="card"><div class="tw"><table><tr><th>ITEM</th><th>SUPPLIER</th><th>PRICE</th><th>STOCK</th></tr>'+STOCK.map(function(s){return '<tr><td><b>'+s[0]+'</b></td><td>'+s[1]+'</td><td>$'+s[3]+'</td><td>'+left(s[2])+'</td></tr>'}).join('')+'</table></div></div>'},
+
+// --- Customers ---
+customers:function(){
+ return head('Customers','Contacts and purchase history','<button class="btn p" onclick="alert(\'New customer form (prototype)\')">+ New customer</button>')+'<div class="card"><div class="tw"><table><tr><th>NAME</th><th>PHONE</th><th>ORDERS</th><th>TOTAL SPENT</th></tr>'+CUS.map(function(c){return '<tr><td><b>'+c[0]+'</b></td><td>'+c[1]+'</td><td>'+c[2]+'</td><td>'+c[3]+'</td></tr>'}).join('')+'</table></div></div>'}
+};
+
+// ===== មុខងារកន្ត្រកទំនិញ =====
+function add(i){cart[i]=(cart[i]||0)+1;show()}                       // បន្ថែម 1
+function chg(i,n){cart[i]+=n;if(cart[i]<1)delete cart[i];show()}     // ប្តូរចំនួន (+1 / -1)
+
+// ប្តូរទំព័រ: កែ #hash ក្នុង URL (ដូច ...#sales)
+function go(p){location.hash=p}
+
+// ===== show(): គូរទំព័រតាម #hash បច្ចុប្បន្ន =====
+function show(){
+ var p=location.hash.slice(1);
+ if(!V[p])p="dashboard";                         // បើគ្មានទំព័រនោះ ទៅ Dashboard
+ document.getElementById("v").innerHTML=V[p]();  // ដាក់ទំព័រចូល <main>
+ // សង់ម៉ឺនុយ sidebar (ទំព័របច្ចុប្បន្នមាន class "on")
+ document.getElementById("nav").innerHTML=P.map(function(x){return '<a class="'+(x[0]==p?'on':'')+'" onclick="go(\''+x[0]+'\')">'+x[3]+' '+x[1]+'<small>'+x[2]+'</small></a>'}).join('');
+ // សង់ម៉ឺនុយខាងក្រោមសម្រាប់ទូរស័ព្ទ
+ document.getElementById("tabs").innerHTML=P.map(function(x){return '<a class="'+(x[0]==p?'on':'')+'" onclick="go(\''+x[0]+'\')">'+x[3]+'<br>'+x[1].split(" ")[0]+'</a>'}).join('');
+}
+window.addEventListener("hashchange",show);   // ពេល URL ប្តូរ គូរទំព័រថ្មី
+show();                                        // គូរទំព័រដំបូងពេលបើក
+</script></body></html>
